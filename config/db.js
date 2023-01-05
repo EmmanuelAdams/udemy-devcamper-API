@@ -6,7 +6,10 @@ const connectDb = async () => {
     process.env.MONGO_URI
   );
 
-  console.log(`MongoDB Connected: ${conn.connection.host}`);
+  console.log(
+    `MongoDB Connected: ${conn.connection.host}`.cyan
+      .underline.bold
+  );
 };
 
 module.exports = connectDb;
