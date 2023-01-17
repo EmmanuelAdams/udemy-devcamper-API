@@ -3,6 +3,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const geocoder = require('../utils/geocoder');
 const Bootcamp = require('../models/Bootcamp');
+const { stringify } = require('querystring');
 
 // @desc      Get all bootcamps
 // @route     GET  /api/v1/bootcamps
@@ -70,7 +71,31 @@ exports.createBootcamp = asyncHandler(
 // @access    Private
 exports.updateBootcamp = asyncHandler(
   async (req, res, next) => {
-    const bootcamp = await Bootcamp.findByIdAndUpdate(
+    let bootcamp = await Bootcamp.findById(req.params.id);
+
+    if (!bootcamp) {
+      return next(
+        new ErrorResponse(
+          `Bootcamp with id of ${req.params.id} not found`,
+          404
+        )
+      );
+    }
+
+    // Make sure logged in user is bootcamp owner
+    if (
+      bootcamp.user.toString() !== req.user.id &&
+      req.user.role !== 'admin'
+    ) {
+      return next(
+        new ErrorResponse(
+          `User ${req.params.id} is not authorized to update this bootcamp`,
+          401
+        )
+      );
+    }
+
+    bootcamp = await Bootcamp.findByIdAndUpdate(
       req.params.id,
       req.body,
       {
@@ -79,19 +104,7 @@ exports.updateBootcamp = asyncHandler(
       }
     );
 
-    if (!bootcamp) {
-      return next(
-        new ErrorResponse(
-          `Bootcamp not found with id of ${req.params.id}`,
-          404
-        )
-      );
-    }
-
-    res.status(200).json({
-      success: true,
-      data: bootcamp,
-    });
+    res.status(200).json({ success: true, data: bootcamp });
   }
 );
 
@@ -107,6 +120,19 @@ exports.deleteBootcamp = asyncHandler(
         new ErrorResponse(
           `Bootcamp not found with id of ${req.params.id}`,
           404
+        )
+      );
+    }
+
+    // Make sure logged in user is bootcamp owner
+    if (
+      bootcamp.user.toString() !== req.user.id &&
+      req.user.role !== 'admin'
+    ) {
+      return next(
+        new ErrorResponse(
+          `User ${req.params.id} is not authorized to delete this bootcamp`,
+          401
         )
       );
     }
@@ -163,6 +189,19 @@ exports.bootcampPhotoUpload = asyncHandler(
         new ErrorResponse(
           `Bootcamp not found with id of ${req.params.id}`,
           404
+        )
+      );
+    }
+
+    // Make sure logged in user is bootcamp owner
+    if (
+      bootcamp.user.toString() !== req.user.id &&
+      req.user.role !== 'admin'
+    ) {
+      return next(
+        new ErrorResponse(
+          `User ${req.params.id} is not authorized to update this bootcamp`,
+          401
         )
       );
     }

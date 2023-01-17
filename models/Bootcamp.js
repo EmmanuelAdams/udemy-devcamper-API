@@ -126,6 +126,16 @@ BootcampSchema.pre('save', function (next) {
   next();
 });
 
+// // Update slug name when bootcamp name is updated
+BootcampSchema.pre('findOneAndUpdate', function (next) {
+  if (this.getUpdate().name) {
+    this.set({
+      slug: slugify(this.getUpdate().name, { lower: true }),
+    });
+  }
+  next();
+});
+
 // Geocode & create location field
 BootcampSchema.pre('save', async function (next) {
   const loc = await geocoder.geocode(this.address);
