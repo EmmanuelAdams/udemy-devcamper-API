@@ -5,6 +5,8 @@ const morgan = require('morgan');
 const fileupload = require('express-fileupload');
 const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
+const xss = require('xss-clean');
 const colors = require('colors');
 const errorHandler = require('./middleware/error');
 const connectDb = require('./config/db');
@@ -40,6 +42,12 @@ app.use(mongoSanitize());
 
 // File uploading
 app.use(fileupload());
+
+// Set security headers
+app.use(helmet());
+
+// Prevent xss attacks
+app.use(xss());
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
