@@ -1,13 +1,14 @@
 const express = require('express');
 const {
-  getCourses,
-  getCourse,
-  addCourse,
-  updateCourse,
-  deleteCourse,
-} = require('../controllers/courses');
+  getRooms,
+  getRoom,
+  addRoom,
+  updateRoom,
+  deleteRoom,
+  roomPhotoUpload,
+} = require('../controllers/rooms');
 
-const Course = require('../models/Course');
+const Room = require('../models/Room');
 
 const router = express.Router({ mergeParams: true });
 
@@ -20,29 +21,30 @@ const {
 router
   .route('/')
   .get(
-    advancedResults(Course, {
-      path: 'bootcamp',
+    advancedResults(Room, {
+      path: 'hotel',
       select: 'name description',
     }),
-    getCourses
+    getRooms
   )
+  .post(protect, authorize('publisher', 'admin'), addRoom);
+
+router
+  .route('/:id/photo')
   .post(
     protect,
     authorize('publisher', 'admin'),
-    addCourse
+    roomPhotoUpload
   );
+
 router
   .route('/:id')
-  .get(getCourse)
-  .put(
-    protect,
-    authorize('publisher', 'admin'),
-    updateCourse
-  )
+  .get(getRoom)
+  .put(protect, authorize('publisher', 'admin'), updateRoom)
   .delete(
     protect,
     authorize('publisher', 'admin'),
-    deleteCourse
+    deleteRoom
   );
 
 module.exports = router;

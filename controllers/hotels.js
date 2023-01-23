@@ -2,100 +2,96 @@ const path = require('path');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const geocoder = require('../utils/geocoder');
-const Bootcamp = require('../models/Bootcamp');
+const Hotel = require('../models/Hotel');
 const { stringify } = require('querystring');
 
-// @desc      Get all bootcamps
-// @route     GET  /api/v1/bootcamps
+// @desc      Get all hotels
+// @route     GET  /api/v1/hotels
 // @access    Public
-exports.getBootcamps = asyncHandler(
-  async (req, res, next) => {
-    res.status(200).json(res.advancedResults);
+exports.getHotels = asyncHandler(async (req, res, next) => {
+  res.status(200).json(res.advancedResults);
+});
+
+// @desc      Get single hotel
+// @route     GET  /api/v1/hotels/:id
+// @access    Public
+exports.getHotel = asyncHandler(async (req, res, next) => {
+  const hotel = await Hotel.findById(req.params.id);
+
+  if (!hotel) {
+    return next(
+      new ErrorResponse(
+        `Hotel not found with id of ${req.params.id}`,
+        404
+      )
+    );
   }
-);
 
-// @desc      Get single bootcamp
-// @route     GET  /api/v1/bootcamps/:id
+  res.status(200).json({
+    success: true,
+    data: hotel,
+  });
+});
+
+// @desc      Create new hotel
+// @route     POST  /api/v1/hotels/:id
 // @access    Public
-exports.getBootcamp = asyncHandler(
-  async (req, res, next) => {
-    const bootcamp = await Bootcamp.findById(req.params.id);
-
-    if (!bootcamp) {
-      return next(
-        new ErrorResponse(
-          `Bootcamp not found with id of ${req.params.id}`,
-          404
-        )
-      );
-    }
-
-    res.status(200).json({
-      success: true,
-      data: bootcamp,
-    });
-  }
-);
-
-// @desc      Create new bootcamp
-// @route     POST  /api/v1/bootcamps/:id
-// @access    Public
-exports.createBootcamp = asyncHandler(
+exports.createHotel = asyncHandler(
   async (req, res, next) => {
     req.body.user = req.user.id;
 
-    const publishedBootcamp = await Bootcamp.findOne({
+    const publishedHotel = await Hotel.findOne({
       user: req.user.id,
     });
 
-    if (publishedBootcamp && req.user.role !== 'admin') {
+    if (publishedHotel && req.user.role !== 'admin') {
       return next(
         new ErrorResponse(
-          `The user with ID:${req.user.id} has already published a bootcamp`,
+          `The user with ID:${req.user.id} has already published a hotel`,
           400
         )
       );
     }
 
-    const bootcamp = await Bootcamp.create(req.body);
+    const hotel = await Hotel.create(req.body);
 
     res.status(201).json({
       success: true,
-      data: bootcamp,
+      data: hotel,
     });
   }
 );
 
-// @desc      Update bootcamp
-// @route     PUT  /api/v1/bootcamps/:id
+// @desc      Update hotel
+// @route     PUT  /api/v1/hotels/:id
 // @access    Private
-exports.updateBootcamp = asyncHandler(
+exports.updateHotel = asyncHandler(
   async (req, res, next) => {
-    let bootcamp = await Bootcamp.findById(req.params.id);
+    let hotel = await Hotel.findById(req.params.id);
 
-    if (!bootcamp) {
+    if (!hotel) {
       return next(
         new ErrorResponse(
-          `Bootcamp with id of ${req.params.id} not found`,
+          `Hotel with id of ${req.params.id} not found`,
           404
         )
       );
     }
 
-    // Make sure logged in user is bootcamp owner
+    // Make sure logged in user is hotel owner
     if (
-      bootcamp.user.toString() !== req.user.id &&
+      hotel.user.toString() !== req.user.id &&
       req.user.role !== 'admin'
     ) {
       return next(
         new ErrorResponse(
-          `User ${req.params.id} is not authorized to update this bootcamp`,
+          `User ${req.params.id} is not authorized to update this hotel`,
           401
         )
       );
     }
 
-    bootcamp = await Bootcamp.findByIdAndUpdate(
+    hotel = await Hotel.findByIdAndUpdate(
       req.params.id,
       req.body,
       {
@@ -104,40 +100,40 @@ exports.updateBootcamp = asyncHandler(
       }
     );
 
-    res.status(200).json({ success: true, data: bootcamp });
+    res.status(200).json({ success: true, data: hotel });
   }
 );
 
-// @desc      Delete bootcamp
-// @route     DELETE  /api/v1/bootcamps/:id
+// @desc      Delete hotel
+// @route     DELETE  /api/v1/hotels/:id
 // @access    Private
-exports.deleteBootcamp = asyncHandler(
+exports.deleteHotel = asyncHandler(
   async (req, res, next) => {
-    const bootcamp = await Bootcamp.findById(req.params.id);
+    const hotel = await Hotel.findById(req.params.id);
 
-    if (!bootcamp) {
+    if (!hotel) {
       return next(
         new ErrorResponse(
-          `Bootcamp not found with id of ${req.params.id}`,
+          `Hotel not found with id of ${req.params.id}`,
           404
         )
       );
     }
 
-    // Make sure logged in user is bootcamp owner
+    // Make sure logged in user is hotel owner
     if (
-      bootcamp.user.toString() !== req.user.id &&
+      hotel.user.toString() !== req.user.id &&
       req.user.role !== 'admin'
     ) {
       return next(
         new ErrorResponse(
-          `User ${req.params.id} is not authorized to delete this bootcamp`,
+          `User ${req.params.id} is not authorized to delete this hotel`,
           401
         )
       );
     }
 
-    bootcamp.remove();
+    hotel.remove();
 
     res.status(200).json({
       success: true,
@@ -146,10 +142,10 @@ exports.deleteBootcamp = asyncHandler(
   }
 );
 
-// @desc      Get bootcamps within a radius
-// @route     DELETE  /api/v1/bootcamps/radius/:zipcode/:distance
+// @desc      Get hotels within a radius
+// @route     DELETE  /api/v1/hotels/radius/:zipcode/:distance
 // @access    Private
-exports.getBootcampsRadius = asyncHandler(
+exports.getHotelsRadius = asyncHandler(
   async (req, res, next) => {
     const { zipcode, distance } = req.params;
 
@@ -163,7 +159,7 @@ exports.getBootcampsRadius = asyncHandler(
     // Earth Radius = 3,963 mi
     const radius = distance / 3963;
 
-    const bootcamps = await Bootcamp.find({
+    const hotels = await Hotel.find({
       location: {
         $geoWithin: { $centerSphere: [[lng, lat], radius] },
       },
@@ -171,36 +167,36 @@ exports.getBootcampsRadius = asyncHandler(
 
     res.status(200).json({
       success: true,
-      count: bootcamps.length,
-      data: bootcamps,
+      count: hotels.length,
+      data: hotels,
     });
   }
 );
 
-// @desc      Upload photo for bootcamp
-// @route     PUT  /api/v1/bootcamps/:id/photo
+// @desc      Upload photo for hotel
+// @route     PUT  /api/v1/hotels/:id/photo
 // @access    Private
-exports.bootcampPhotoUpload = asyncHandler(
+exports.hotelPhotoUpload = asyncHandler(
   async (req, res, next) => {
-    const bootcamp = await Bootcamp.findById(req.params.id);
+    const hotel = await Hotel.findById(req.params.id);
 
-    if (!bootcamp) {
+    if (!hotel) {
       return next(
         new ErrorResponse(
-          `Bootcamp not found with id of ${req.params.id}`,
+          `Hotel not found with id of ${req.params.id}`,
           404
         )
       );
     }
 
-    // Make sure logged in user is bootcamp owner
+    // Make sure logged in user is hotel owner
     if (
-      bootcamp.user.toString() !== req.user.id &&
+      hotel.user.toString() !== req.user.id &&
       req.user.role !== 'admin'
     ) {
       return next(
         new ErrorResponse(
-          `User ${req.params.id} is not authorized to update this bootcamp`,
+          `User ${req.params.id} is not authorized to update this hotel`,
           401
         )
       );
@@ -212,7 +208,7 @@ exports.bootcampPhotoUpload = asyncHandler(
       );
     }
 
-    const file = req.files.files;
+    const file = req.files.file;
 
     // // Make sure the file is an image
     if (!file.mimetype.startsWith('image')) {
@@ -235,7 +231,7 @@ exports.bootcampPhotoUpload = asyncHandler(
     }
 
     // Create custom filename
-    file.name = `photo_${bootcamp._id}${
+    file.name = `photo_${hotel._id}${
       path.parse(file.name).ext
     }`;
 
@@ -252,7 +248,7 @@ exports.bootcampPhotoUpload = asyncHandler(
           );
         }
 
-        await Bootcamp.findByIdAndUpdate(req.params.id, {
+        await Hotel.findByIdAndUpdate(req.params.id, {
           photo: file.name,
         });
 

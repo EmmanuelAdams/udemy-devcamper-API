@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const slugify = require('slugify');
 const geocoder = require('../utils/geocoder');
 
-const BootcampSchema = new mongoose.Schema(
+const HotelSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -65,19 +65,6 @@ const BootcampSchema = new mongoose.Schema(
       zipcode: String,
       country: String,
     },
-    careers: {
-      // Array of strings
-      type: [String],
-      required: true,
-      enum: [
-        'Web Development',
-        'Mobile Development',
-        'UI/UX',
-        'Data Science',
-        'Business',
-        'Other',
-      ],
-    },
     averageRating: {
       type: Number,
       min: [1, 'Rating must be at least 1'],
@@ -87,22 +74,6 @@ const BootcampSchema = new mongoose.Schema(
     photo: {
       type: String,
       default: 'no-photo.jpg',
-    },
-    housing: {
-      type: Boolean,
-      default: false,
-    },
-    jobAssistance: {
-      type: Boolean,
-      default: false,
-    },
-    jobGuarantee: {
-      type: Boolean,
-      default: false,
-    },
-    acceptGi: {
-      type: Boolean,
-      default: false,
     },
     createdAt: {
       type: Date,
@@ -120,14 +91,14 @@ const BootcampSchema = new mongoose.Schema(
   }
 );
 
-// Create bootcamp slug from the name
-BootcampSchema.pre('save', function (next) {
+// Create hotel slug from the name
+HotelSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
 
-// // Update slug name when bootcamp name is updated
-BootcampSchema.pre('findOneAndUpdate', function (next) {
+// // Update slug name when hotel name is updated
+HotelSchema.pre('findOneAndUpdate', function (next) {
   if (this.getUpdate().name) {
     this.set({
       slug: slugify(this.getUpdate().name, { lower: true }),
@@ -137,7 +108,7 @@ BootcampSchema.pre('findOneAndUpdate', function (next) {
 });
 
 // Geocode & create location field
-BootcampSchema.pre('save', async function (next) {
+HotelSchema.pre('save', async function (next) {
   const loc = await geocoder.geocode(this.address);
   this.location = {
     type: 'Point',
@@ -155,23 +126,21 @@ BootcampSchema.pre('save', async function (next) {
   next();
 });
 
-// Cascade delete courses when a bootcamp is deleted
-BootcampSchema.pre('remove', async function (next) {
-  console.log(
-    `Courses being removed from bootcamp ${this._id}`
-  );
-  await this.model('Course').deleteMany({
-    bootcamp: this._id,
+// Cascade delete rooms when a hotel is deleted
+HotelSchema.pre('remove', async function (next) {
+  console.log(`rooms being removed from hotel ${this._id}`);
+  await this.model('Room').deleteMany({
+    hotel: this._id,
   });
   next();
 });
 
 // Reverse populate with virtuals
-BootcampSchema.virtual('courses', {
-  ref: 'Course',
+HotelSchema.virtual('rooms', {
+  ref: 'Room',
   localField: '_id',
-  foreignField: 'bootcamp',
+  foreignField: 'hotel',
   justOne: false,
 });
 
-module.exports = mongoose.model('Bootcamp', BootcampSchema);
+module.exports = mongoose.model('Hotel', HotelSchema);

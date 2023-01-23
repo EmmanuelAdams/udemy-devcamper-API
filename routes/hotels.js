@@ -1,18 +1,18 @@
 const express = require('express');
 const {
-  getBootcamps,
-  getBootcamp,
-  createBootcamp,
-  updateBootcamp,
-  deleteBootcamp,
-  getBootcampsRadius,
-  bootcampPhotoUpload,
-} = require('../controllers/bootcamps');
+  getHotels,
+  getHotel,
+  createHotel,
+  updateHotel,
+  deleteHotel,
+  getHotelsRadius,
+  hotelPhotoUpload,
+} = require('../controllers/hotels');
 
-const Bootcamp = require('../models/Bootcamp');
+const Hotel = require('../models/Hotel');
 
 // Include other resource routers
-const courseRouter = require('./courses');
+const roomRouter = require('./rooms');
 const reviewRouter = require('./reviews');
 
 const router = express.Router();
@@ -24,20 +24,20 @@ const {
 } = require('../middleware/auth');
 
 // Re-route into other resource routers
-router.use('/:bootcampId/courses', courseRouter);
-router.use('/:bootcampId/reviews', reviewRouter);
+router.use('/:hotelId/rooms', roomRouter);
+router.use('/:hotelId/reviews', reviewRouter);
 
 router
   .route('/radius/:zipcode/:distance')
-  .get(getBootcampsRadius);
+  .get(getHotelsRadius);
 
 router
   .route('/')
-  .get(advancedResults(Bootcamp, 'courses'), getBootcamps)
+  .get(advancedResults(Hotel, 'rooms'), getHotels)
   .post(
     protect,
     authorize('publisher', 'admin'),
-    createBootcamp
+    createHotel
   );
 
 router
@@ -45,21 +45,21 @@ router
   .put(
     protect,
     authorize('publisher', 'admin'),
-    bootcampPhotoUpload
+    hotelPhotoUpload
   );
 
 router
   .route('/:id')
-  .get(getBootcamp)
+  .get(getHotel)
   .put(
     protect,
     authorize('publisher', 'admin'),
-    updateBootcamp
+    updateHotel
   )
   .delete(
     protect,
     authorize('publisher', 'admin'),
-    deleteBootcamp
+    deleteHotel
   );
 
 module.exports = router;

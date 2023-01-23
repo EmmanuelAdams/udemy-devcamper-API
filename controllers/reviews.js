@@ -1,17 +1,17 @@
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const Review = require('../models/Review');
-const Bootcamp = require('../models/Bootcamp');
+const Hotel = require('../models/Hotel');
 
 // @desc      Get reviews
 // @route     GET  /api/v1/reviews
-// @route     GET  /api/v1/bootcamps/:bootcampId/reviews
+// @route     GET  /api/v1/hotels/:hotelId/reviews
 // @access    Public
 exports.getReviews = asyncHandler(
   async (req, res, next) => {
-    if (req.params.bootcampId) {
+    if (req.params.hotelId) {
       const reviews = await Review.find({
-        bootcamp: req.params.bootcampId,
+        hotel: req.params.hotelId,
       });
 
       return res.status(200).json({
@@ -32,7 +32,7 @@ exports.getReview = asyncHandler(async (req, res, next) => {
   const review = await Review.findById(
     req.params.id
   ).populate({
-    path: 'bootcamp',
+    path: 'hotel',
     select: 'name description',
   });
 
@@ -52,20 +52,18 @@ exports.getReview = asyncHandler(async (req, res, next) => {
 });
 
 // @desc      Add review
-// @route     POST /api/v1/bootcamps/bootcampId/reviews
+// @route     POST /api/v1/hotels/hotelId/reviews
 // @access    Private
 exports.addReview = asyncHandler(async (req, res, next) => {
-  req.body.bootcamp = req.params.bootcampId;
+  req.body.hotel = req.params.hotelId;
   req.body.user = req.user.id;
 
-  const bootcamp = await Bootcamp.findById(
-    req.params.bootcampId
-  );
+  const hotel = await Hotel.findById(req.params.hotelId);
 
-  if (!bootcamp) {
+  if (!hotel) {
     return next(
       new ErrorResponse(
-        `No bootcamp with the id of ${req.params.bootcampId}`
+        `No hotel with the id of ${req.params.hotelId}`
       ),
       404
     );
