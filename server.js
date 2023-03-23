@@ -67,11 +67,7 @@ app.use(hpp());
 app.use(cors());
 
 // Set static folder
-// app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('/', (_, res) => {
-  res.sendFile(`${__dirname}/public/index.html`);
-});
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Mount routers
 app.use('/api/v1/hotels', hotels);
